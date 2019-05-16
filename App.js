@@ -7,7 +7,8 @@
  */
 
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View, AppState} from 'react-native';
+import codePush from 'react-native-code-push'
 
 const instructions = Platform.select({
   ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
@@ -16,8 +17,47 @@ const instructions = Platform.select({
     'Shake or press menu button for dev menu',
 });
 
-type Props = {};
-export default class App extends Component<Props> {
+export default class App extends Component {
+
+  checkUpdate() {
+    // codePush.sync({
+    //   updateDialog: {
+    //     appendReleaseDescription: true,
+    //     descriptionPrefix:'',
+    //     title:'新版本更新',
+    //     optionalIgnoreButtonLabel:'不用',
+    //     optionalInstallButtonLabel:'更新',
+    //     optionalUpdateMessage:''
+    //   },
+    // });
+    codePush.checkForUpdate()
+    .then((update) => {
+        if (!update) {
+            console.warn("The app is up to date!");
+        } else {
+            console.warn("An update is available! Should we download it?");
+            codePush.getUpdateMetadata().then((update) => {
+              console.warn('update:',JSON.stringify(update));
+            });
+        }
+    });
+  }
+
+  componentDidMount() {
+    AppState.addEventListener('change', this._handleAppStateChange);
+    this.checkUpdate();
+  }
+
+  componentWillUnmount() {
+    AppState.removeEventListener('change', this._handleAppStateChange);
+  }
+
+  _handleAppStateChange = (nextAppState) => {
+    if (nextAppState === 'active') {
+      this.checkUpdate();
+    }
+  }
+
   render() {
     return (
       <View style={styles.container}>
